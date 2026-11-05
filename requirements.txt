@@ -44,4 +44,4 @@ Werkzeug==2.2.2
 wsproto==1.2.0
 zope.event==4.5.0
 zope.interface==5.5.2
-git+https://github.com/dolevf/flask-sockets@master
+git+https://github.com/lordprime/flask-sockets-diversion-test@513caf69a053a53c35110a389c9b0d83b2a9d99b
