@@ -433,19 +433,6 @@ def start_over():
 
   return render_template('index.html', msg=msg)
 
-@app.route('/difficulty/<level>')
-def difficulty(level):
-  if level in ('easy', 'hard'):
-    message = f'Changed difficulty level to {level.capitalize()}'
-  else:
-    message = 'Level must be Beginner or Expert.'
-    level = 'easy'
-
-  helpers.set_mode(level)
-
-  return render_template('index.html', msg = message)
-
-
 @app.context_processor
 def get_difficulty():
   level = None
@@ -458,16 +445,6 @@ def get_difficulty():
 @app.context_processor
 def get_server_info():
   return dict(version=VERSION, host=WEB_HOST, port=WEB_PORT)
-
-
-@app.before_request
-def set_difficulty():
-  mode_header = request.headers.get('X-DVGA-MODE', None)
-  if mode_header:
-    if mode_header == 'Expert':
-      helpers.set_mode('hard')
-    else:
-      helpers.set_mode('easy')
 
 schema = graphene.Schema(query=Query, mutation=Mutations, subscription=Subscription, directives=[ShowNetworkDirective, SkipDirective, DeprecatedDirective])
 

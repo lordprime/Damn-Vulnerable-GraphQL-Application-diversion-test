@@ -1,9 +1,8 @@
 import base64
 import uuid
 import os
-from config import WEB_UPLOADDIR
+from config import WEB_UPLOADDIR, DVGA_LOCKED_MODE
 from jwt import decode
-from core.models import ServerMode
 
 def run_cmd(cmd):
   return os.popen(cmd).read()
@@ -29,13 +28,11 @@ def save_file(filename, text):
     text = str(e)
   return text
 
+# The level is read once from the environment (config.DVGA_LOCKED_MODE) and
+# never changes; there is deliberately no way to set it at runtime.
 def is_level_easy():
-  mode = ServerMode.query.one()
-  return mode.hardened == False
+  return DVGA_LOCKED_MODE == 'easy'
 
 def is_level_hard():
-  mode = ServerMode.query.one()
-  return mode.hardened == True
+  return DVGA_LOCKED_MODE == 'hard'
 
-def set_mode(mode):
-  mode = ServerMode.set_mode(mode)

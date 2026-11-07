@@ -107,7 +107,7 @@ def pump_db():
       db.session.add(paste)
 
     mode = ServerMode()
-    mode.hardened = False
+    mode.hardened = config.DVGA_LOCKED_MODE == 'hard'
     db.session.add(mode)
 
     db.session.commit()
