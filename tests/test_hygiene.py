@@ -82,6 +82,14 @@ def test_solutions_route_is_gone(dvga):
     assert app.test_client().get('/solutions').status_code == 404
 
 
+@pytest.mark.parametrize('name', ['index', 'create', 'pastes', 'solution'])
+def test_upstream_screenshots_are_gone(dvga, name):
+    # Upstream screenshots show the old hint prose / solutions page.
+    app, _ = dvga
+    r = app.test_client().get(f'/static/screenshots/{name}.png')
+    assert r.status_code == 404
+
+
 @pytest.mark.parametrize('value', ['Expert', 'Beginner', 'expert'])
 def test_mode_header_does_not_change_mode(dvga, value):
     app, helpers = dvga
