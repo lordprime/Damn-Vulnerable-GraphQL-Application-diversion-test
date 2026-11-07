@@ -23,6 +23,15 @@ from db.content import content
 DEFAULT_SEED = 20240301
 SEED_EPOCH = datetime.datetime(2024, 3, 1, 9, 0, 0)
 
+# Lab: seeded volume, on top of upstream's admin/operator users and the
+# DVGAUser owner with its two private pastes. Overridable per call, or by
+# env DVGA_SEED_PASTES / DVGA_SEED_USERS.
+DEFAULT_PASTES = 3000
+DEFAULT_USERS = 150
+PUBLIC_RATIO = 0.88
+RESERVED_NAMES = ('admin', 'operator', 'dvgauser')
+EMAIL_DOMAINS = ['example.com', 'example.org', 'example.net']
+
 def env_int(name, default, minimum=None):
   raw = os.environ.get(name)
   if raw is None or raw.strip() == '':
@@ -84,7 +93,66 @@ def random_useragent(rng):
     user_agents.append(uas)
   return rng.choice(user_agents)
 
-def pump_db(seed=None):
+def random_username(rng, taken):
+  """A unique lower-case handle built from the first-name pool."""
+  while True:
+    first = random_owner(rng).lower()
+    style = rng.randrange(4)
+    if style == 0:
+      name = f'{first}{rng.randrange(1, 100)}'
+    elif style == 1:
+      name = f'{first}.{rng.choice("abcdefghijklmnoprstvw")}'
+    elif style == 2:
+      name = f'{first}_{rng.choice("abcdefghijklmnoprstvw")}{rng.randrange(10)}'
+    else:
+      name = f'{rng.choice("abcdefghijklmnoprstvw")}{first}'
+    name = name[:20]
+    if name not in taken and name not in RESERVED_NAMES:
+      taken.add(name)
+      return name
+
+def random_member_password(rng):
+  alphabet = 'abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return ''.join(rng.choice(alphabet) for _ in range(14))
+
+def seed_members(rng, n_users):
+  """n_users site members, each with a User row, an Owner row of the same
+  name, a few addresses and browsers, and a posting weight (a few members
+  post a lot, most post a little)."""
+  taken = set()
+  members = []
+  for _ in range(n_users):
+    username = random_username(rng, taken)
+    members.append({
+      'user': User(username=username,
+                   email=f'{username}@{rng.choice(EMAIL_DOMAINS)}',
+                   password=random_member_password(rng)),
+      'owner': Owner(name=username),
+      'addresses': [random_address(rng) for _ in range(rng.randint(1, 3))],
+      'agents': [random_useragent(rng) for _ in range(rng.randint(1, 2))],
+      'weight': min(rng.paretovariate(1.2), 25.0),
+    })
+  return members
+
+def random_paste(rng):
+  """(title, content) for one seeded paste."""
+  return random_title(rng), random_content(rng)
+
+def pump_db(n_pastes: int = None, n_users: int = None, seed: int = None):
+  """Create the schema and seed it.
+
+  n_pastes / n_users: seeded pastes and members on top of upstream's rows;
+  None means env DVGA_SEED_PASTES / DVGA_SEED_USERS, else 3000 / 150.
+  seed: None means env DVGA_SEED, else DEFAULT_SEED.
+  """
+  if n_pastes is None:
+    n_pastes = env_int('DVGA_SEED_PASTES', DEFAULT_PASTES, minimum=0)
+  if n_users is None:
+    n_users = env_int('DVGA_SEED_USERS', DEFAULT_USERS, minimum=0)
+  if n_pastes < 0 or n_users < 0:
+    raise ValueError('n_pastes and n_users must be >= 0')
+  if n_pastes and not n_users:
+    raise ValueError('seeding pastes needs at least one seeded user')
   print('Populating Database')
   rng = seed_rng(seed)
   with app.app_context():
@@ -122,18 +190,22 @@ def pump_db(seed=None):
 
     db.session.commit()
 
-    for _ in range(0, 10):
-      owner = Owner(name=random_owner(rng))
-      paste = Paste()
-      paste.title = random_title(rng)
-      paste.content = random_content(rng)
-      paste.public = True
-      paste.owner_id = owner.id
-      paste.owner = owner
-      paste.ip_addr = random_address(rng)
-      paste.user_agent = random_useragent(rng)
+    members = seed_members(rng, n_users)
+    for member in members:
+      db.session.add(member['user'])
+      db.session.add(member['owner'])
 
-      db.session.add(owner)
+    weights = [m['weight'] for m in members]
+    for _ in range(n_pastes):
+      member = rng.choices(members, weights=weights)[0]
+      title, body = random_paste(rng)
+      paste = Paste()
+      paste.title = title
+      paste.content = body
+      paste.public = rng.random() < PUBLIC_RATIO
+      paste.owner = member['owner']
+      paste.ip_addr = rng.choice(member['addresses'])
+      paste.user_agent = rng.choice(member['agents'])
       db.session.add(paste)
 
     mode = ServerMode()
