@@ -28,8 +28,7 @@ def save_file(filename, text):
     text = str(e)
   return text
 
-# The level is read once from the environment (config.DVGA_LOCKED_MODE) and
-# never changes; there is deliberately no way to set it at runtime.
+# The level is read once from the environment (config.DVGA_LOCKED_MODE).
 def is_level_easy():
   return DVGA_LOCKED_MODE == 'easy'
 
