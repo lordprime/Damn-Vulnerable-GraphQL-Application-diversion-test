@@ -20,7 +20,6 @@ from core.view_override import (
   GeventSubscriptionServerCustom,
   format_custom_error
 )
-from db.solutions import solutions as list_of_solutions
 from rx.subjects import Subject
 from flask import (
   request,
@@ -398,10 +397,6 @@ def index():
 @app.route('/about')
 def about():
   return render_template("about.html")
-
-@app.route('/solutions')
-def solutions():
-  return render_template("solutions.html", solutions=list_of_solutions)
 
 @app.route('/create_paste')
 def create_paste():
