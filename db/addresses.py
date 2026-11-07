@@ -1,5 +1,4 @@
-# Client address ranges for seeded pastes. Only the RFC 5737 documentation
-# ranges: they look like ordinary public addresses but belong to nobody.
+# Client address ranges for seeded pastes (RFC 5737).
 networks = [
   '192.0.2.0/24',
   '198.51.100.0/24',

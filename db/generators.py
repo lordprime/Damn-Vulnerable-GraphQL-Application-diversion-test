@@ -1,4 +1,4 @@
-"""Generated paste bodies for the lab seed: logs, meeting notes, lists, CSV.
+"""Generated paste bodies for the seed data: logs, meeting notes, lists, CSV.
 
 Every function takes the seeding RNG and, where time matters, a `when`
 datetime derived from the fixed seed epoch. Nothing here reads the clock or

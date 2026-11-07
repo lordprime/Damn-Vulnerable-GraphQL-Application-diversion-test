@@ -1,6 +1,4 @@
-# Seed content for the lab paste site. Everything here is synthetic and
-# generic: no real people, no working credentials, no real hosts (only
-# example.com names and reserved address ranges).
+# Content pools that setup.py draws from when seeding the paste site.
 
 # Short one-line notes. Seeded "note" pastes join one to four of these.
 content = [
@@ -137,7 +135,7 @@ fill_values = {
 }
 
 # Pastes with a fixed body (code, configs, recipes, longer notes). Each has a
-# few plausible titles. {{name}} placeholders are filled from fill_values.
+# few titles. {{name}} placeholders are filled from fill_values.
 snippets = [
   {'titles': ['fizzbuzz', 'fizzbuzz in python', 'interview warmup'],
    'body': '''for i in range(1, 101):

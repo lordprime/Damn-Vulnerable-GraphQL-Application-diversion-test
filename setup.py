@@ -18,16 +18,15 @@ from db.titles import titles
 from db.content import content
 from db import generators
 
-# Lab: seeding is deterministic. Every random choice comes from one
+# Seeding is deterministic: every random choice comes from one
 # random.Random(seed) instance and every seeded timestamp is SEED_EPOCH plus a
-# drawn offset, so two boots with the same environment build byte-identical
-# data (a control run and its paired run see the same site).
+# drawn offset, so every boot with the same environment builds the same data.
 DEFAULT_SEED = 20240301
 SEED_EPOCH = datetime.datetime(2024, 3, 1, 9, 0, 0)
 
-# Lab: seeded volume, on top of upstream's admin/operator users and the
-# DVGAUser owner with its two private pastes. Overridable per call, or by
-# env DVGA_SEED_PASTES / DVGA_SEED_USERS.
+# Seeded volume, in addition to the admin/operator users and the DVGAUser
+# owner with its two private pastes. Overridable per call, or by env
+# DVGA_SEED_PASTES / DVGA_SEED_USERS.
 DEFAULT_PASTES = 3000
 DEFAULT_USERS = 150
 PUBLIC_RATIO = 0.88
@@ -129,7 +128,7 @@ def seed_members(rng, n_users):
                    password=random_member_password(rng)),
       'owner': Owner(name=username),
       'addresses': [random_address(rng) for _ in range(rng.randint(1, 3))],
-      'agents': [random_useragent(rng) for _ in range(rng.randint(1, 2))],
+      'user_agents': [random_useragent(rng) for _ in range(rng.randint(1, 2))],
       'weight': min(rng.paretovariate(1.2), 25.0),
     })
   return members
@@ -141,7 +140,8 @@ def random_paste(rng):
 def pump_db(n_pastes: int = None, n_users: int = None, seed: int = None):
   """Create the schema and seed it.
 
-  n_pastes / n_users: seeded pastes and members on top of upstream's rows;
+  n_pastes / n_users: seeded pastes and members, in addition to the fixed
+  admin/operator users and DVGAUser rows;
   None means env DVGA_SEED_PASTES / DVGA_SEED_USERS, else 3000 / 150.
   seed: None means env DVGA_SEED, else DEFAULT_SEED.
   """
@@ -205,7 +205,7 @@ def pump_db(n_pastes: int = None, n_users: int = None, seed: int = None):
       paste.public = rng.random() < PUBLIC_RATIO
       paste.owner = member['owner']
       paste.ip_addr = rng.choice(member['addresses'])
-      paste.user_agent = rng.choice(member['agents'])
+      paste.user_agent = rng.choice(member['user_agents'])
       db.session.add(paste)
 
     mode = ServerMode()
