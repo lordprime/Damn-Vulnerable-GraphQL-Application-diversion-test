@@ -11,10 +11,12 @@ from app import db, app
 
 from core.models import Paste, Owner, User, ServerMode
 
+from db.addresses import networks
 from db.agents import agents
 from db.owners import owners
 from db.titles import titles
 from db.content import content
+from db import generators
 
 # Lab: seeding is deterministic. Every random choice comes from one
 # random.Random(seed) instance and every seeded timestamp is SEED_EPOCH plus a
@@ -78,10 +80,8 @@ def random_owner(rng):
   return rng.choice(owners)
 
 def random_address(rng):
-  addresses = []
-  for addr in IPv4Network('215.0.2.0/24'):
-    addresses.append(str(addr))
-  return rng.choice(addresses)
+  network = IPv4Network(rng.choice(networks))
+  return str(network[rng.randrange(1, network.num_addresses - 1)])
 
 def random_password(rng):
   weak_passwords = ['changeme']
@@ -135,8 +135,8 @@ def seed_members(rng, n_users):
   return members
 
 def random_paste(rng):
-  """(title, content) for one seeded paste."""
-  return random_title(rng), random_content(rng)
+  """(title, content) for one seeded paste, dated from the seed epoch."""
+  return generators.random_paste(rng, seed_timestamp(rng))
 
 def pump_db(n_pastes: int = None, n_users: int = None, seed: int = None):
   """Create the schema and seed it.
