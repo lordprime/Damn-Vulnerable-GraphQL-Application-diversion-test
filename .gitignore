@@ -141,3 +141,6 @@ cython_debug/
 dvga.db
 tools/
 
+
+# Lab: runtime upload directory created by setup.py
+pastes/
