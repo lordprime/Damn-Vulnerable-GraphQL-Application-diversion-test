@@ -423,6 +423,13 @@ def audit():
   audit = Audit.query.order_by(Audit.timestamp.desc())
   return render_template("audit.html", audit=audit)
 
+@app.route('/robots.txt')
+def robots():
+  # Crawlers have no business in the audit log.
+  resp = make_response("User-agent: *\nDisallow: /audit\n")
+  resp.mimetype = 'text/plain'
+  return resp
+
 @app.route('/start_over')
 def start_over():
   msg = "Restored to default state."

@@ -302,3 +302,19 @@ def test_shipped_source_does_not_describe_the_study():
     assert not any(n.startswith('tests/') for n in names)
     hits = _study_hits(files)
     assert hits == [], '\n'.join(hits)
+
+
+def test_robots_txt_keeps_crawlers_out_of_the_audit_log(dvga):
+    import urllib.robotparser
+
+    app, _ = dvga
+    client = app.test_client()
+    r = client.get('/robots.txt')
+    assert r.status_code == 200
+    assert r.mimetype == 'text/plain'
+    rules = urllib.robotparser.RobotFileParser()
+    rules.parse(r.get_data(as_text=True).splitlines())
+    assert not rules.can_fetch('*', '/audit')
+    assert rules.can_fetch('*', '/about')
+    # the page it keeps crawlers out of is a real page
+    assert client.get('/audit').status_code == 200
